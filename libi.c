@@ -35,7 +35,6 @@ WRAPPER(opendir, DIR*,
     printf("hello worlds\n");
     );
 
-//untest yet
 WRAPPER(chmod, int, 
     ARGAGG(const char *pathname, mode_t mode), 
     ARGAGG(pathname, mode), 
@@ -91,6 +90,31 @@ WRAPPER(open, int,
     ARGAGG(pathname, flags),
     ARGAGG(const char*, int),
     printf("This is open1 \n");
+    );
+
+WRAPPER(openat, int,
+    ARGAGG(int dirfd, const char *pathname, int flags),
+    ARGAGG(dirfd, pathname, flags),
+    ARGAGG(int, const char*, int),
+    printf("This is opennat\n");
+    );
+WRAPPER(readlink, ssize_t,
+    ARGAGG(const char *pathname, char *buf, size_t bufsiz),
+    ARGAGG(pathname, buf, bufsiz),
+    ARGAGG(const char*, char*, size_t),
+    printf("This is readlink\n");
+    );
+WRAPPER(remove, int,
+    ARGAGG(const char *pathname),
+    ARGAGG(pathname),
+    ARGAGG(const char*),
+    printf("This is remove\n");
+    );
+WRAPPER(rename, int,
+    ARGAGG(const char *oldpath, const char *newpath),
+    ARGAGG(oldpath, newpath),
+    ARGAGG(const char*, const char*),
+    printf("This is rename\n");
     );
 
 /*
