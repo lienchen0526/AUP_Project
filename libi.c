@@ -10,7 +10,8 @@
 #define ARGPARSE(...) __VA_ARGS__
 
 #define WRAPPER(func_name, ret_type, args,              \
-    argname, preprocess)                                \
+    argname, argtype, preprocess)                       \
+    static ret_type (*old_##func_name)(argtype) = NULL; \
     ret_type func_name(args) {                          \
         if(old_##func_name == NULL){                    \
             void *handle = dlopen("libc.so.6"           \
@@ -29,10 +30,8 @@
 
 static bool initflag = false;
 
-static DIR *(*old_opendir)(const char*) = NULL;
-
-WRAPPER(opendir, DIR*, const char *name, 
-    name, printf("hello world\n"););
+WRAPPER(opendir, DIR*, ARGPARSE(const char *name), 
+    ARGPARSE(name), ARGPARSE(const char*), printf("hello worlds\n"););
 
 /*
 DIR *opendir(const char *name){
