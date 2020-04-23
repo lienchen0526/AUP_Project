@@ -28,17 +28,34 @@
         return old_##func_name(argname);                \
     };
 
-WRAPPER(opendir, DIR*, ARGPARSE(const char *name), 
-    ARGPARSE(name), ARGPARSE(const char*), printf("hello worlds\n"););
+WRAPPER(opendir, DIR*, 
+    ARGPARSE(const char *name), 
+    ARGPARSE(name), 
+    ARGPARSE(const char*), 
+    printf("hello worlds\n");
+    );
 
 //untest yet
-WRAPPER(chmod, int, ARGPARSE(const char *pathname, mode_t mode), 
-    ARGPARSE(pathname, mode), ARGPARSE(const char*, mode_t),
-    printf("hello this is chmod\n"););
+WRAPPER(chmod, int, 
+    ARGPARSE(const char *pathname, mode_t mode), 
+    ARGPARSE(pathname, mode), 
+    ARGPARSE(const char*, mode_t),
+    printf("hello this is chmod\n");
+    );
 
-WRAPPER(readdir, ARGPARSE(struct dirent*), ARGPARSE(DIR *dirp),
-    ARGPARSE(dirp), ARGPARSE(DIR*),
-    printf("this is readdir\n"););
+WRAPPER(readdir, struct dirent*, 
+    ARGPARSE(DIR *dirp),
+    ARGPARSE(dirp), 
+    ARGPARSE(DIR*),
+    printf("this is readdir\n");
+    );
+
+WRAPPER(chdir, int, 
+    ARGPARSE(const char *path),
+    ARGPARSE(path),
+    ARGPARSE(const char*),
+    printf("this is chdir\n");
+    );
 /*
 DIR *opendir(const char *name){
     if(old_opendir == NULL){
