@@ -19,13 +19,13 @@
                                                         \
             if(handle != NULL){                         \
                 old_##func_name = dlsym(handle,         \
-                    #func_name);                   \
+                    #func_name);                        \
             } else {                                    \
                 perror("Open libc.so.6 fail");          \
             }                                           \
         } else {}                                       \
         preprocess                                      \
-        return old_##func_name(argname);                   \
+        return old_##func_name(argname);                \
     };
 
 static bool initflag = false;
