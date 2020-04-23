@@ -7,7 +7,7 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
-#define ARGPARSE(...) __VA_ARGS__
+#define ARGAGG(...) __VA_ARGS__
 
 #define WRAPPER(func_name, ret_type, args,              \
     argname, argtype, preprocess)                       \
@@ -29,33 +29,58 @@
     };
 
 WRAPPER(opendir, DIR*, 
-    ARGPARSE(const char *name), 
-    ARGPARSE(name), 
-    ARGPARSE(const char*), 
+    ARGAGG(const char *name), 
+    ARGAGG(name), 
+    ARGAGG(const char*), 
     printf("hello worlds\n");
     );
 
 //untest yet
 WRAPPER(chmod, int, 
-    ARGPARSE(const char *pathname, mode_t mode), 
-    ARGPARSE(pathname, mode), 
-    ARGPARSE(const char*, mode_t),
+    ARGAGG(const char *pathname, mode_t mode), 
+    ARGAGG(pathname, mode), 
+    ARGAGG(const char*, mode_t),
     printf("hello this is chmod\n");
     );
 
 WRAPPER(readdir, struct dirent*, 
-    ARGPARSE(DIR *dirp),
-    ARGPARSE(dirp), 
-    ARGPARSE(DIR*),
+    ARGAGG(DIR *dirp),
+    ARGAGG(dirp), 
+    ARGAGG(DIR*),
     printf("this is readdir\n");
     );
 
 WRAPPER(chdir, int, 
-    ARGPARSE(const char *path),
-    ARGPARSE(path),
-    ARGPARSE(const char*),
+    ARGAGG(const char *path),
+    ARGAGG(path),
+    ARGAGG(const char*),
     printf("this is chdir\n");
     );
+WRAPPER(chown, int,
+    ARGAGG(const char *pathname, uid_t owner, gid_t group),
+    ARGAGG(pathname, owner, group),
+    ARGAGG(const char*, uid_t, gid_t),
+    printf("This is chown\n");
+    );
+WRAPPER(creat, int,
+    ARGAGG(const char *pathname, mode_t mode),
+    ARGAGG(pathname, mode),
+    ARGAGG(const char*, mode_t),
+    printf("This is creat\n");
+    );
+WRAPPER(fopen, FILE*,
+    ARGAGG(const char *pathname, const char *mode),
+    ARGAGG(pathname, mode),
+    ARGAGG(const char*, const char*),
+    printf("This is fopen\n");
+    );
+WRAPPER(link, int,
+    ARGAGG(const char *oldpath, const char *newpath),
+    ARGAGG(oldpath, newpath),
+    ARGAGG(const char*, const char*),
+    printf("This is link\n");
+    );
+
 /*
 DIR *opendir(const char *name){
     if(old_opendir == NULL){
