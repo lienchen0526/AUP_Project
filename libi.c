@@ -28,11 +28,12 @@
         return old_##func_name(argname);                \
     };
 
-static bool initflag = false;
-
 WRAPPER(opendir, DIR*, ARGPARSE(const char *name), 
     ARGPARSE(name), ARGPARSE(const char*), printf("hello worlds\n"););
 
+WRAPPER(chmod, int, ARGPARSE(const char *pathname, mode_t mode), 
+    ARGPARSE(pathname, mode), ARGPARSE(const char*, mode_t),
+    printf("hello this is chmod\n"););
 /*
 DIR *opendir(const char *name){
     if(old_opendir == NULL){
