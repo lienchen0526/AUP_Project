@@ -9,24 +9,26 @@
 
 #define ARGAGG(...) __VA_ARGS__
 
-#define WRAPPER(func_name, ret_type, args,              \
-    argname, argtype, preprocess)                       \
-    static ret_type (*old_##func_name)(argtype) = NULL; \
-    ret_type func_name(args) {                          \
-        if(old_##func_name == NULL){                    \
-            void *handle = dlopen("libc.so.6"           \
-                , RTLD_LAZY);                           \
-                                                        \
-            if(handle != NULL){                         \
-                old_##func_name = dlsym(handle,         \
-                    #func_name);                        \
-            } else {                                    \
-                perror("Open libc.so.6 fail");          \
-            }                                           \
-        } else {}                                       \
-        preprocess                                      \
-        return old_##func_name(argname);                \
+#define WRAPPER(func_name, ret_type, args,                      \
+    argname, argtype, preprocess)                               \
+    static ret_type (*old_##func_name)(argtype) = NULL;         \
+    ret_type func_name(args) {                                  \
+        if(old_##func_name == NULL){                            \
+            void *handle = dlopen("libc.so.6"                   \
+                , RTLD_LAZY);                                   \
+                                                                \
+            if(handle != NULL){                                 \
+                *(void**) &(old_##func_name) = dlsym(handle,    \
+                    #func_name);                                \
+            } else {                                            \
+                perror("Open libc.so.6 fail");                  \
+            }                                                   \
+        } else {}                                               \
+        preprocess                                              \
+        return old_##func_name(argname);                        \
     };
+
+struct stat;
 
 WRAPPER(opendir, DIR*, 
     ARGAGG(const char *name), 
@@ -42,12 +44,6 @@ WRAPPER(chmod, int,
     printf("hello this is chmod\n");
     );
 
-WRAPPER(readdir, struct dirent*, 
-    ARGAGG(DIR *dirp),
-    ARGAGG(dirp), 
-    ARGAGG(DIR*),
-    printf("this is readdir\n");
-    );
 
 WRAPPER(chdir, int, 
     ARGAGG(const char *path),
@@ -116,7 +112,32 @@ WRAPPER(rename, int,
     ARGAGG(const char*, const char*),
     printf("This is rename\n");
     );
+WRAPPER(rmdir, int,
+    ARGAGG(const char *pathname),
+    ARGAGG(pathname),
+    ARGAGG(const char*),
+    printf("This is rmdir\n");
+    );
 
+
+WRAPPER(__xstat, int,
+    ARGAGG(const char *pathname, struct stat *statbuf),
+    ARGAGG(pathname, statbuf),
+    ARGAGG(const char*, struct stat*),
+    printf("This is stat\n");
+    );
+WRAPPER(symlink, int,
+    ARGAGG(const char *target, const char *linkpath),
+    ARGAGG(target, linkpath),
+    ARGAGG(const char*, const char*),
+    printf("This is symlink\n");
+    );
+WRAPPER(unlink, int,
+    ARGAGG(const char *pathname),
+    ARGAGG(pathname),
+    ARGAGG(const char*),
+    printf("This is unlink\n");
+    );
 /*
 DIR *opendir(const char *name){
     if(old_opendir == NULL){
