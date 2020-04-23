@@ -1,12 +1,15 @@
 main:
-	gcc -o libi.so -shared -fPIC libi.c -ldl
+	g++ -o libi.so -shared -fPIC libi.c -ldl
 test:
-	gcc -o sample testcase.c
+	g++ -o sample testcase.c
 runtest:
-	gcc -o libi.so -shared -fPIC libi.c -ldl
-	gcc -o sample testcase.c
+	g++ -o libi.so -shared -fPIC libi.c -ldl
+	g++ -o sample testcase.c
 	LD_PRELOAD=./libi.so ./sample
-	
+
+showsym:
+	gcc -o sample testcase.c
+	nm -D sample
 clean:
 	rm libi.so
 	rm sample
