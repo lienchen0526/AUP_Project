@@ -6,6 +6,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdarg.h>
+#include <unistd.h>
+#include <string.h>
+#include <limits.h>
+#include <stdlib.h>
+#include <sys/stat.h>
 
 #define ARGAGG(...) __VA_ARGS__
 
@@ -30,11 +35,40 @@
 
 struct stat;
 
+bool permission(const char *target_path){
+    char cwd[PATH_MAX];
+    char target_resolved_path[PATH_MAX];
+
+    if(realpath(target_path, target_resolved_path) == NULL){
+        perror("realpath() fail");
+    }
+
+    if (getcwd(cwd, sizeof(cwd)) != NULL) {
+        if(strncmp(target_resolved_path, cwd, strlen(cwd)) == 0){
+            return true;
+        } else {
+            return false;
+        }
+    } else {
+        perror("getcwd() error");
+        return true;
+    }
+}
+
+void print_deny(const char *function_name,
+    const char* pathname){
+        fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
+            function_name, pathname);
+    }
+
 WRAPPER(opendir, DIR*, 
     ARGAGG(const char *name), 
     ARGAGG(name), 
     ARGAGG(const char*), 
-    printf("hello worlds\n");
+    if(!permission(name)){
+        print_deny("opendir", name);
+        return NULL;
+    } else {};
     );
 
 WRAPPER(chmod, int, 
@@ -120,12 +154,14 @@ WRAPPER(rmdir, int,
     );
 
 
+
 WRAPPER(__xstat, int,
     ARGAGG(const char *pathname, struct stat *statbuf),
     ARGAGG(pathname, statbuf),
     ARGAGG(const char*, struct stat*),
     printf("This is stat\n");
     );
+
 WRAPPER(symlink, int,
     ARGAGG(const char *target, const char *linkpath),
     ARGAGG(target, linkpath),
@@ -138,17 +174,3 @@ WRAPPER(unlink, int,
     ARGAGG(const char*),
     printf("This is unlink\n");
     );
-/*
-DIR *opendir(const char *name){
-    if(old_opendir == NULL){
-        void *handle = dlopen("libc.so.6", RTLD_LAZY);
-        if(handle != NULL){
-            old_opendir = dlsym(handle, "opendir");
-        } else {
-            perror("Open libc.so.6 fail");
-        }
-    } else {}
-    printf("inject success\n");
-    return old_opendir(name);
-}
-*/
