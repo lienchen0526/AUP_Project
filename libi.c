@@ -80,6 +80,18 @@ WRAPPER(link, int,
     ARGAGG(const char*, const char*),
     printf("This is link\n");
     );
+WRAPPER(mkdir, int,
+    ARGAGG(const char *pathname, mode_t mode),
+    ARGAGG(pathname, mode),
+    ARGAGG(const char*, mode_t),
+    printf("This is mkdir\n");
+    );
+WRAPPER(open, int,
+    ARGAGG(const char *pathname, int flags),
+    ARGAGG(pathname, flags),
+    ARGAGG(const char*, int),
+    printf("This is open1 \n");
+    );
 
 /*
 DIR *opendir(const char *name){
