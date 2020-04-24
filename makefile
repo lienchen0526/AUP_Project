@@ -1,7 +1,10 @@
 main:
 	g++ -o libi.so -shared -fPIC libi.c -ldl
+	g++ -o sandbox sandbox.c
 test:
 	g++ -o sample testcase.c
+sandbox:
+	g++ -o sandbox sandbox.c
 runtest:
 	g++ -o libi.so -shared -fPIC libi.c -ldl
 	g++ -o sample testcase.c
@@ -13,3 +16,4 @@ showsym:
 clean:
 	rm libi.so
 	rm sample
+	rm sandbox
