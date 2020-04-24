@@ -36,13 +36,28 @@
 struct stat;
 
 bool permission(const char *target_path){
+    size_t path_len = 0;
+    char mutable_target_path[256] = {0};
     char cwd[PATH_MAX];
     char target_resolved_path[PATH_MAX];
-
-    if(realpath(target_path, target_resolved_path) == NULL){
-        perror("realpath() fail");
+    if(strcpy(mutable_target_path, target_path) == NULL){
+        fprintf(stderr,"strcpy fail with %s\n", target_path);
+    };
+    while(mutable_target_path[path_len] != 0){
+        path_len += 1;
     }
 
+    while(realpath(mutable_target_path, 
+        target_resolved_path) == NULL){
+        while(path_len > 0 && mutable_target_path[path_len] != '/'){
+            mutable_target_path[path_len] = 0;
+            path_len --;
+        }
+        if(path_len != 0){
+            mutable_target_path[path_len] = 0;
+            path_len --;
+        } else {}
+    }
     if (getcwd(cwd, sizeof(cwd)) != NULL) {
         if(strncmp(target_resolved_path, cwd, strlen(cwd)) == 0){
             return true;
@@ -59,7 +74,7 @@ void print_deny(const char *function_name,
     const char* pathname){
         fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
             function_name, pathname);
-    }
+}
 
 WRAPPER(opendir, DIR*, 
     ARGAGG(const char *name), 
@@ -75,7 +90,10 @@ WRAPPER(chmod, int,
     ARGAGG(const char *pathname, mode_t mode), 
     ARGAGG(pathname, mode), 
     ARGAGG(const char*, mode_t),
-    printf("hello this is chmod\n");
+    if(!permission(pathname)){
+        print_deny("chmod", pathname);
+        return -1;
+    } else {};
     );
 
 
@@ -83,94 +101,148 @@ WRAPPER(chdir, int,
     ARGAGG(const char *path),
     ARGAGG(path),
     ARGAGG(const char*),
-    printf("this is chdir\n");
+    if(!permission(path)){
+        print_deny("chdir", path);
+        return -1;
+    } else {};
     );
 WRAPPER(chown, int,
     ARGAGG(const char *pathname, uid_t owner, gid_t group),
     ARGAGG(pathname, owner, group),
     ARGAGG(const char*, uid_t, gid_t),
-    printf("This is chown\n");
+    if(!permission(pathname)){
+        print_deny("chown", pathname);
+        return -1;
+    } else {};
     );
 WRAPPER(creat, int,
     ARGAGG(const char *pathname, mode_t mode),
     ARGAGG(pathname, mode),
     ARGAGG(const char*, mode_t),
-    printf("This is creat\n");
+    if(!permission(pathname)){
+        print_deny("creat", pathname);
+        return -1;
+    } else {};
     );
 WRAPPER(fopen, FILE*,
     ARGAGG(const char *pathname, const char *mode),
     ARGAGG(pathname, mode),
     ARGAGG(const char*, const char*),
-    printf("This is fopen\n");
+    if(!permission(pathname)){
+        print_deny("creat", pathname);
+        return NULL;
+    } else {};
     );
 WRAPPER(link, int,
     ARGAGG(const char *oldpath, const char *newpath),
     ARGAGG(oldpath, newpath),
     ARGAGG(const char*, const char*),
-    printf("This is link\n");
+    if(!permission(oldpath)){
+        print_deny("link", oldpath);
+        return -1;
+    } else {};
+    if(!permission(newpath)){
+        print_deny("link", newpath);
+        return -1;
+    } else {};
     );
 WRAPPER(mkdir, int,
     ARGAGG(const char *pathname, mode_t mode),
     ARGAGG(pathname, mode),
     ARGAGG(const char*, mode_t),
-    printf("This is mkdir\n");
+    if(!permission(pathname)){
+        print_deny("mkdir", pathname);
+        return -1;
+    } else {};
     );
 WRAPPER(open, int,
     ARGAGG(const char *pathname, int flags),
     ARGAGG(pathname, flags),
     ARGAGG(const char*, int),
-    printf("This is open1 \n");
+    if(!permission(pathname)){
+        print_deny("open", pathname);
+        return -1;
+    } else {};
     );
 
 WRAPPER(openat, int,
     ARGAGG(int dirfd, const char *pathname, int flags),
     ARGAGG(dirfd, pathname, flags),
     ARGAGG(int, const char*, int),
-    printf("This is opennat\n");
+    if(!permission(pathname)){
+        print_deny("openat", pathname);
+        return -1;
+    } else {};
     );
 WRAPPER(readlink, ssize_t,
     ARGAGG(const char *pathname, char *buf, size_t bufsiz),
     ARGAGG(pathname, buf, bufsiz),
     ARGAGG(const char*, char*, size_t),
-    printf("This is readlink\n");
+    if(!permission(pathname)){
+        print_deny("readlink", pathname);
+        return -1;
+    } else {};
     );
 WRAPPER(remove, int,
     ARGAGG(const char *pathname),
     ARGAGG(pathname),
     ARGAGG(const char*),
-    printf("This is remove\n");
+    if(!permission(pathname)){
+        print_deny("remove", pathname);
+        return -1;
+    } else {};
     );
 WRAPPER(rename, int,
     ARGAGG(const char *oldpath, const char *newpath),
     ARGAGG(oldpath, newpath),
     ARGAGG(const char*, const char*),
-    printf("This is rename\n");
+    if(!permission(oldpath)){
+        print_deny("rename", oldpath);
+        return -1;
+    } else {};
+    if(!permission(newpath)){
+        print_deny("rename", newpath);
+        return -1;
+    } else {};
     );
 WRAPPER(rmdir, int,
     ARGAGG(const char *pathname),
     ARGAGG(pathname),
     ARGAGG(const char*),
-    printf("This is rmdir\n");
+    if(!permission(pathname)){
+        print_deny("rmdir", pathname);
+        return -1;
+    } else {};
     );
-
-
-
 WRAPPER(__xstat, int,
     ARGAGG(const char *pathname, struct stat *statbuf),
     ARGAGG(pathname, statbuf),
     ARGAGG(const char*, struct stat*),
-    printf("This is stat\n");
+    if(!permission(pathname)){
+        print_deny("stat", pathname);
+        return -1;
+    } else {};
     );
 
 WRAPPER(symlink, int,
     ARGAGG(const char *target, const char *linkpath),
     ARGAGG(target, linkpath),
     ARGAGG(const char*, const char*),
-    printf("This is symlink\n");
+    if(!permission(target)){
+        print_deny("symlink", target);
+        return -1;
+    } else {};
+    if(!permission(linkpath)){
+        print_deny("symlink", linkpath);
+        return -1;
+    } else {};
     );
 WRAPPER(unlink, int,
     ARGAGG(const char *pathname),
     ARGAGG(pathname),
     ARGAGG(const char*),
-    printf("This is unlink\n");
+    if(!permission(pathname)){
+        print_deny("unlink", pathname);
+        return -1;
+    } else {};
     );
