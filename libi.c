@@ -33,7 +33,7 @@
         return old_##func_name(argname);                        \
     };
 
-struct stat;
+
 
 bool permission(const char *target_path){
     size_t path_len = 0;
@@ -62,7 +62,11 @@ bool permission(const char *target_path){
         if(strncmp(target_resolved_path, cwd, strlen(cwd)) == 0){
             return true;
         } else {
-            return false;
+            if(getenv("PRIV") == NULL){
+                return false;
+            } else {
+                return true;
+            }
         }
     } else {
         perror("getcwd() error");
@@ -245,4 +249,60 @@ WRAPPER(unlink, int,
         print_deny("unlink", pathname);
         return -1;
     } else {};
+    );
+
+WRAPPER(execl, int,
+    ARGAGG(const char *path, const char *arg, ...),
+    ARGAGG(path, arg),
+    ARGAGG(const char *, const char *),
+    printf("[sandbox] execl(%s): not allowed\n", path);
+    return -1;
+    );
+
+WRAPPER(execve, int,
+    ARGAGG(const char *filename, char *const argv[],
+                  char *const envp[]),
+    ARGAGG(filename, *argv, *envp),
+    ARGAGG(const char *, char *const, char *const),
+    printf("[sandbox] execve(%s): not allowed\n", filename);
+    return -1;
+    );
+
+WRAPPER(execle, int,
+    ARGAGG(const char *path, const char *arg, ...),
+    ARGAGG(path, arg),
+    ARGAGG(const char*, const char*),
+    printf("[sandbox] execle(%s): not allowed\n", path);
+    return -1;
+    );
+
+WRAPPER(execlp, int,
+    ARGAGG(const char *file, const char *arg, ...),
+    ARGAGG(file, arg),
+    ARGAGG(const char*, const char*),
+    printf("[sandbox] execlp(%s): not allowed\n", file);
+    return -1;
+    );
+
+WRAPPER(execv, int,
+    ARGAGG(const char *path, char *const argv[]),
+    ARGAGG(path, *argv),
+    ARGAGG(const char*, char *const),
+    printf("[sandbox] execv(%s): not allowed\n", path);
+    return -1;
+    );
+WRAPPER(execvp, int,
+    ARGAGG(const char *file, char *const argv[]),
+    ARGAGG(file, *argv),
+    ARGAGG(const char*, char *const),
+    printf("[sandbox] execvp(%s): not allowed\n", file);
+    return -1;
+    );
+
+WRAPPER(system, int,
+    ARGAGG(const char *command),
+    ARGAGG(command),
+    ARGAGG(const char*),
+    printf("[sandbox] system(%s): not allowed\n", command);
+    return -1;
     );
