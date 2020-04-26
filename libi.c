@@ -10,7 +10,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+//#include <sys/stat.h>
 
 #define ARGAGG(...) __VA_ARGS__
 
@@ -32,8 +32,6 @@
         preprocess                                              \
         return old_##func_name(argname);                        \
     };
-
-
 
 bool permission(const char *target_path){
     size_t path_len = 0;
@@ -79,7 +77,7 @@ void print_deny(const char *function_name,
         fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
             function_name, pathname);
 }
-
+extern "C"{
 WRAPPER(opendir, DIR*, 
     ARGAGG(const char *name), 
     ARGAGG(name), 
@@ -119,12 +117,42 @@ WRAPPER(chown, int,
         return -1;
     } else {};
     );
+
+WRAPPER(open, int,
+    ARGAGG(const char *pathname, int flags),
+    ARGAGG(pathname, flags),
+    ARGAGG(const char*, int),
+    if(!permission(pathname)){
+        print_deny("open", pathname);
+        return -1;
+    } else {};
+    );
+
 WRAPPER(creat, int,
     ARGAGG(const char *pathname, mode_t mode),
     ARGAGG(pathname, mode),
     ARGAGG(const char*, mode_t),
     if(!permission(pathname)){
         print_deny("creat", pathname);
+        return -1;
+    } else {};
+    );
+WRAPPER(openat, int,
+    ARGAGG(int dirfd, const char *pathname, int flags),
+    ARGAGG(dirfd, pathname, flags),
+    ARGAGG(int, const char*, int),
+    if(!permission(pathname)){
+        print_deny("openat", pathname);
+        return -1;
+    } else {};
+    );
+
+WRAPPER(__xstat, int,
+    ARGAGG(const char *pathname, struct stat *statbuf),
+    ARGAGG(pathname, statbuf),
+    ARGAGG(const char*, struct stat*),
+    if(!permission(pathname)){
+        print_deny("stat", pathname);
         return -1;
     } else {};
     );
@@ -156,25 +184,6 @@ WRAPPER(mkdir, int,
     ARGAGG(const char*, mode_t),
     if(!permission(pathname)){
         print_deny("mkdir", pathname);
-        return -1;
-    } else {};
-    );
-WRAPPER(open, int,
-    ARGAGG(const char *pathname, int flags),
-    ARGAGG(pathname, flags),
-    ARGAGG(const char*, int),
-    if(!permission(pathname)){
-        print_deny("open", pathname);
-        return -1;
-    } else {};
-    );
-
-WRAPPER(openat, int,
-    ARGAGG(int dirfd, const char *pathname, int flags),
-    ARGAGG(dirfd, pathname, flags),
-    ARGAGG(int, const char*, int),
-    if(!permission(pathname)){
-        print_deny("openat", pathname);
         return -1;
     } else {};
     );
@@ -218,15 +227,7 @@ WRAPPER(rmdir, int,
         return -1;
     } else {};
     );
-WRAPPER(__xstat, int,
-    ARGAGG(const char *pathname, struct stat *statbuf),
-    ARGAGG(pathname, statbuf),
-    ARGAGG(const char*, struct stat*),
-    if(!permission(pathname)){
-        print_deny("stat", pathname);
-        return -1;
-    } else {};
-    );
+
 
 WRAPPER(symlink, int,
     ARGAGG(const char *target, const char *linkpath),
@@ -306,3 +307,4 @@ WRAPPER(system, int,
     printf("[sandbox] system(%s): not allowed\n", command);
     return -1;
     );
+}
