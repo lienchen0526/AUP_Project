@@ -73,10 +73,7 @@ bool permission(const char *target_path){
 }
 
 void print_deny(const char *function_name,
-    const char* pathname){
-        fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
-            function_name, pathname);
-}
+    const char* pathname);
 extern "C"{
 WRAPPER(opendir, DIR*, 
     ARGAGG(const char *name), 
@@ -307,4 +304,48 @@ WRAPPER(system, int,
     printf("[sandbox] system(%s): not allowed\n", command);
     return -1;
     );
+}
+
+void print_deny(const char *function_name,
+    const char* pathname){
+        if(old_readlink == NULL){
+            void *handle = dlopen("libc.so.6"
+                , RTLD_LAZY);
+            if(handle != NULL){
+                *(void**) &(old_readlink) = dlsym(handle,
+                    "readlink");
+                *(void**) &(old_opendir) = dlsym(handle,
+                    "opendir");
+                *(void**) &(old_fopen) = dlsym(handle,
+                    "fopen");
+            }
+        }
+        char proc_path[30] = {0};
+        char link_path[256] = {0};
+        FILE *stderr_new = NULL;
+        sprintf(proc_path, "/proc/%u/fd", getpid());
+        DIR *outdir = old_opendir(proc_path);
+        struct dirent *dirvis;
+        if(!outdir){
+            perror("opendir fail");
+            exit(0);
+        } else {}
+        dirvis = readdir(outdir);
+        if(!dirvis){
+            perror("readdir fail");
+        }
+        while(strcmp(dirvis -> d_name, "2")){
+            dirvis = readdir(outdir);
+        }
+        sprintf(proc_path, "%s/%s", proc_path, dirvis -> d_name);
+        old_readlink(proc_path, link_path, 256);
+        link_path[8] = 0;
+        if(strcmp(link_path, "/dev/pts")){
+            stderr_new = old_fopen("/dev/tty", "a");
+            fprintf(stderr_new, "[sandbox] %s: access to %s is not allowed\n",
+            function_name, pathname);
+        } else {};
+
+        fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
+            function_name, pathname);
 }
