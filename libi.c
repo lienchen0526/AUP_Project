@@ -10,7 +10,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
-//#include <sys/stat.h>
+#include <sys/stat.h>
 
 #define ARGAGG(...) __VA_ARGS__
 
@@ -148,9 +148,9 @@ WRAPPER(openat, int,
     );
 
 WRAPPER(__xstat, int,
-    ARGAGG(const char *pathname, struct stat *statbuf),
-    ARGAGG(pathname, statbuf),
-    ARGAGG(const char*, struct stat*),
+    ARGAGG(int ver, const char *pathname, struct stat *statbuf),
+    ARGAGG(ver, pathname, statbuf),
+    ARGAGG(int, const char*, struct stat*),
     if(!permission(pathname)){
         print_deny("stat", pathname);
         return -1;
