@@ -1,18 +1,3 @@
-Toggle navigation
-
-![](Chun-Ying%20Huang_files/n_all.png)
-
--   [Home](https://people.cs.nctu.edu.tw/~chuang/)
--   [Students](https://people.cs.nctu.edu.tw/~chuang/students.php)
--   [Publications](https://people.cs.nctu.edu.tw/~chuang/pubs.php)
--   [Courses](#)
-    -   [UNIX
-        Programming](https://people.cs.nctu.edu.tw/~chuang/courses/unixprog/)
-    -   [Software Development
-        Practice](https://people.cs.nctu.edu.tw/~chuang/courses/softdev/)
-    -   [Software Security (Secure
-        Programming)](https://people.cs.nctu.edu.tw/~chuang/courses/swsec/)
-
 ### Homework \#2
 
 #### Advanced Programming in the UNIX Environment
