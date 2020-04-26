@@ -1,5 +1,5 @@
 main:
-	g++ -o libi.so -shared -fPIC libi.c -ldl
+	g++ -o libi.so -shared -fPIC libi.c -ldl -fno-builtin
 	g++ -o sandbox sandbox.c
 test:
 	g++ -o sample testcase.c
@@ -11,7 +11,7 @@ runtest:
 	LD_PRELOAD=./libi.so ./sample
 
 showsym:
-	gcc -o sample testcase.c
+	gcc -o sample -g testcase.c
 	nm -D sample
 clean:
 	rm libi.so
