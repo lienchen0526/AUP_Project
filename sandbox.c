@@ -9,7 +9,7 @@
 
 __attribute__((constructor)) void preload(){
     char full_so[256] = {0};
-    if(realpath("./libi.so", full_so) == NULL){
+    if(realpath("./sandbox.so", full_so) == NULL){
         perror("realpath fail");
     }
     setenv("LD_PRELOAD", full_so, true); 
