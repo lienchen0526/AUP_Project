@@ -10,7 +10,7 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <sys/stat.h>
+//#include <sys/stat.h>
 
 #define ARGAGG(...) __VA_ARGS__
 
@@ -125,7 +125,27 @@ WRAPPER(open, int,
     } else {};
     );
 
+WRAPPER(open64, int,
+    ARGAGG(const char *pathname, int flags),
+    ARGAGG(pathname, flags),
+    ARGAGG(const char*, int),
+    if(!permission(pathname)){
+        print_deny("open", pathname);
+        return -1;
+    } else {};
+    );
+
 WRAPPER(creat, int,
+    ARGAGG(const char *pathname, mode_t mode),
+    ARGAGG(pathname, mode),
+    ARGAGG(const char*, mode_t),
+    if(!permission(pathname)){
+        print_deny("creat", pathname);
+        return -1;
+    } else {};
+    );
+
+WRAPPER(creat64, int,
     ARGAGG(const char *pathname, mode_t mode),
     ARGAGG(pathname, mode),
     ARGAGG(const char*, mode_t),
@@ -143,8 +163,25 @@ WRAPPER(openat, int,
         return -1;
     } else {};
     );
-
+WRAPPER(openat64, int,
+    ARGAGG(int dirfd, const char *pathname, int flags),
+    ARGAGG(dirfd, pathname, flags),
+    ARGAGG(int, const char*, int),
+    if(!permission(pathname)){
+        print_deny("openat", pathname);
+        return -1;
+    } else {};
+    );
 WRAPPER(__xstat, int,
+    ARGAGG(int ver, const char *pathname, struct stat *statbuf),
+    ARGAGG(ver, pathname, statbuf),
+    ARGAGG(int, const char*, struct stat*),
+    if(!permission(pathname)){
+        print_deny("stat", pathname);
+        return -1;
+    } else {};
+    );
+WRAPPER(__xstat64, int,
     ARGAGG(int ver, const char *pathname, struct stat *statbuf),
     ARGAGG(ver, pathname, statbuf),
     ARGAGG(int, const char*, struct stat*),
@@ -158,7 +195,17 @@ WRAPPER(fopen, FILE*,
     ARGAGG(pathname, mode),
     ARGAGG(const char*, const char*),
     if(!permission(pathname)){
-        print_deny("creat", pathname);
+        print_deny("fopen", pathname);
+        return NULL;
+    } else {};
+    );
+
+WRAPPER(fopen64, FILE*,
+    ARGAGG(const char *pathname, const char *mode),
+    ARGAGG(pathname, mode),
+    ARGAGG(const char*, const char*),
+    if(!permission(pathname)){
+        print_deny("fopen", pathname);
         return NULL;
     } else {};
     );
@@ -253,7 +300,8 @@ WRAPPER(execl, int,
     ARGAGG(const char *path, const char *arg, ...),
     ARGAGG(path, arg),
     ARGAGG(const char *, const char *),
-    printf("[sandbox] execl(%s): not allowed\n", path);
+    print_deny("execl", path);
+    //printf("[sandbox] execl(%s): not allowed\n", path);
     return -1;
     );
 
@@ -262,7 +310,8 @@ WRAPPER(execve, int,
                   char *const envp[]),
     ARGAGG(filename, *argv, *envp),
     ARGAGG(const char *, char *const, char *const),
-    printf("[sandbox] execve(%s): not allowed\n", filename);
+    print_deny("execve", filename);
+    //printf("[sandbox] execve(%s): not allowed\n", filename);
     return -1;
     );
 
@@ -270,7 +319,8 @@ WRAPPER(execle, int,
     ARGAGG(const char *path, const char *arg, ...),
     ARGAGG(path, arg),
     ARGAGG(const char*, const char*),
-    printf("[sandbox] execle(%s): not allowed\n", path);
+    print_deny("execle", path);
+    //printf("[sandbox] execle(%s): not allowed\n", path);
     return -1;
     );
 
@@ -278,7 +328,8 @@ WRAPPER(execlp, int,
     ARGAGG(const char *file, const char *arg, ...),
     ARGAGG(file, arg),
     ARGAGG(const char*, const char*),
-    printf("[sandbox] execlp(%s): not allowed\n", file);
+    print_deny("execlp", file);
+    //printf("[sandbox] execlp(%s): not allowed\n", file);
     return -1;
     );
 
@@ -286,14 +337,16 @@ WRAPPER(execv, int,
     ARGAGG(const char *path, char *const argv[]),
     ARGAGG(path, *argv),
     ARGAGG(const char*, char *const),
-    printf("[sandbox] execv(%s): not allowed\n", path);
+    print_deny("execv", path);
+    //printf("[sandbox] execv(%s): not allowed\n", path);
     return -1;
     );
 WRAPPER(execvp, int,
     ARGAGG(const char *file, char *const argv[]),
     ARGAGG(file, *argv),
     ARGAGG(const char*, char *const),
-    printf("[sandbox] execvp(%s): not allowed\n", file);
+    print_deny("execvp", file);
+    //printf("[sandbox] execvp(%s): not allowed\n", file);
     return -1;
     );
 
@@ -301,7 +354,8 @@ WRAPPER(system, int,
     ARGAGG(const char *command),
     ARGAGG(command),
     ARGAGG(const char*),
-    printf("[sandbox] system(%s): not allowed\n", command);
+    print_deny("system", command);
+    //printf("[sandbox] system(%s): not allowed\n", command);
     return -1;
     );
 }
@@ -323,6 +377,8 @@ void print_deny(const char *function_name,
         char proc_path[30] = {0};
         char link_path[256] = {0};
         FILE *stderr_new = NULL;
+        char exec[] = "exec";
+        char sys[] = "system";
         sprintf(proc_path, "/proc/%u/fd", getpid());
         DIR *outdir = old_opendir(proc_path);
         struct dirent *dirvis;
@@ -342,10 +398,23 @@ void print_deny(const char *function_name,
         link_path[8] = 0;
         if(strcmp(link_path, "/dev/pts")){
             stderr_new = old_fopen("/dev/tty", "a");
-            fprintf(stderr_new, "[sandbox] %s: access to %s is not allowed\n",
-            function_name, pathname);
+            if((strncmp(function_name, exec, strlen(exec)) == 0) || 
+                (strncmp(function_name, sys, strlen(sys)) == 0)){
+                fprintf(stderr_new, "[sandbox] %s(%s): not allowed\n", 
+                    function_name, pathname);
+            } else {
+                fprintf(stderr_new, "[sandbox] %s: access to %s is not allowed\n",
+                function_name, pathname);
+            }
+            
         } else {};
 
-        fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
+        if(strncmp(function_name, exec, strlen(exec)) == 0 ||
+            strncmp(function_name, sys, strlen(sys)) == 0){
+            fprintf(stderr, "[sandbox] %s(%s): not allowed\n", 
+                function_name, pathname);
+        } else {
+            fprintf(stderr, "[sandbox] %s: access to %s is not allowed\n",
             function_name, pathname);
+        }
 }
